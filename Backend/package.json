@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
     "axios": "^1.8.3",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "csv-parse": "^5.5.3",
     "dotenv": "^16.6.1",
