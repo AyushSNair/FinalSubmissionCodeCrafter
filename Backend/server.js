@@ -13,6 +13,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const yahooFinance = require('yahoo-finance2').default;
 
+
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
@@ -32,7 +33,7 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection with better error handling
-mongoose.connect("mongodb+srv://nairayush45:nairayush45@cluster0.3daw0.mongodb.net/investPortal?retryWrites=true&w=majority&appName=Cluster0")
+mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ Connected to MongoDB: investPortal');
     })
