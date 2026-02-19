@@ -30,31 +30,13 @@ router.post('/stock-insights/:symbol', async (req, res) => {
 router.post('/market-analysis', async (req, res) => {
     try {
         const { query } = req.body;
-        
-        // Get market data
-        const marketData = {
-            sp500: await getStockQuote('^GSPC'),
-            dowJones: await getStockQuote('^DJI'),
-            nasdaq: await getStockQuote('^IXIC'),
-            vix: await getStockQuote('^VIX')
-        };
-
-        // Log market data for debugging
-        console.log('Market Data:', JSON.stringify(marketData, null, 2));
-
-        const analysis = await geminiService.getMarketAnalysis(marketData, query);
+        const analysis = await geminiService.getMarketAnalysis(query);
         res.json({ analysis });
     } catch (error) {
-        console.error('Error getting market analysis:', {
-            message: error.message,
-            stack: error.stack,
-            marketData: error.marketData,
-            query: req.body.query
-        });
+        console.error('Error getting market analysis:', error.message);
         res.status(500).json({ 
             message: 'Failed to get market analysis',
-            error: error.message,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            error: error.message
         });
     }
 });

@@ -62,19 +62,10 @@ class GeminiService {
         }
     }
 
-    async getMarketAnalysis(marketData, userQuery) {
+    async getMarketAnalysis(userQuery) {
         try {
-            const context = `
-                As a market analyst, here is the current market data:
-                
-                S&P 500: ${marketData.sp500?.price || 'N/A'} (${marketData.sp500?.change || 'N/A'}%)
-                Dow Jones: ${marketData.dowJones?.price || 'N/A'} (${marketData.dowJones?.change || 'N/A'}%)
-                NASDAQ: ${marketData.nasdaq?.price || 'N/A'} (${marketData.nasdaq?.change || 'N/A'}%)
-                VIX: ${marketData.vix?.price || 'N/A'}
-            `;
-
             const prompt = userQuery || `
-                Based on this market data, please provide:
+                Please provide a comprehensive market analysis including:
                 1. Overall market sentiment and trends
                 2. Key sector movements
                 3. Risk factors and opportunities
@@ -82,7 +73,7 @@ class GeminiService {
                 5. Trading recommendations
             `;
 
-            const result = await this.model.generateContent([context, prompt]);
+            const result = await this.model.generateContent(prompt);
             const response = await result.response;
             return response.text();
 
