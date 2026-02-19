@@ -17,16 +17,21 @@ const yahooFinance = require('yahoo-finance2').default;
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+    "http://localhost:3000",
+    process.env.FRONTEND_URL || "https://finalsubmissioncodecrafter.onrender.com"
+];
+
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: allowedOrigins,
         methods: ["GET", "POST"]
     }
 });
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));

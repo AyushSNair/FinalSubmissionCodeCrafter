@@ -19,6 +19,8 @@ import {
 } from 'recharts';
 import './ProfitEstimation.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const ProfitEstimation = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -36,10 +38,10 @@ const ProfitEstimation = () => {
         
         // Fetch portfolio data including stocks, bonds, and insurance
         const [stocksRes, bondsRes, insuranceRes, userStatsRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/stocks/portfolio/${user.email}`),
-          axios.get(`http://localhost:8000/api/bonds/portfolio/${user.email}`),
-          axios.get(`http://localhost:8000/api/insurance/portfolio/${user.email}`),
-          axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`)
+          axios.get(`${API_URL}/api/stocks/portfolio/${user.email}`),
+          axios.get(`${API_URL}/api/bonds/portfolio/${user.email}`),
+          axios.get(`${API_URL}/api/insurance/portfolio/${user.email}`),
+          axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`)
         ]);
 
         const portfolioData = {
@@ -165,7 +167,7 @@ const ProfitEstimation = () => {
 
   return (
     <div className="profit-estimation-container">
-      <button onClick={handleBack} className="back-button">← Back to Dashboard</button>
+      <button onClick={handleBack} className="back-button">Back to Dashboard</button>
       
       <h1>Investment Profit Estimation</h1>
       

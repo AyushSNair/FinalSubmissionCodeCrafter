@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Stocks.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Stocks = () => {
   const [stocks, setStocks] = useState([]);
   const [filteredStocks, setFilteredStocks] = useState([]);
@@ -13,7 +15,7 @@ const Stocks = () => {
 
   const fetchStocks = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/stocks');
+      const res = await axios.get(`${API_URL}/api/stocks`);
       setStocks(res.data);
       setFilteredStocks(res.data);
       setLoading(false);
@@ -58,7 +60,7 @@ const Stocks = () => {
   return (
     <div className="stocks-container">
       <button className="back-button" onClick={handleBack}>
-        ← Back to Home
+        Back to Home
       </button>
       
       <h2 className="stocks-header">Available Stocks</h2>
@@ -110,13 +112,13 @@ const Stocks = () => {
                   <td>
                     <div className="stock-actions">
                       <Link to={`/buy/${stock.symbol}`}>
-                        <button className="action-btn buy-btn">Buy 🛒</button>
+                        <button className="action-btn buy-btn">Buy </button>
                       </Link>
                       <Link to={`/stock/${stock.symbol}`}>
-                        <button className="action-btn details-btn">Details 📊</button>
+                        <button className="action-btn details-btn">Details </button>
                       </Link>
                       <Link to={`/prediction/${stock.symbol}`}>
-                        <button className="action-btn predict-btn">Predict 🔮</button>
+                        <button className="action-btn predict-btn">Predict </button>
                       </Link>
                     </div>
                   </td>

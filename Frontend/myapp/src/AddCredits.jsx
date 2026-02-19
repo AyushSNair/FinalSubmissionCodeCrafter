@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import axios from 'axios';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const AddCredits = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -51,7 +53,7 @@ const AddCredits = () => {
         handler: async function (response) {
           try {
             // Update user credits after successful payment
-            const updateResponse = await axios.post('http://localhost:8000/api/users/update-credits', {
+            const updateResponse = await axios.post(`${API_URL}/api/users/update-credits`, {
               email: user.email,
               credits: parseFloat(amount)
             });
@@ -89,7 +91,7 @@ const AddCredits = () => {
 
   return (
     <div className="add-credits-container">
-      <button onClick={handleBack} className="back-button">← Back</button>
+      <button onClick={handleBack} className="back-button"> Back</button>
       
       <div className="credits-form-container">
         <h2>Add Credits</h2>

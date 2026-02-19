@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import axios from 'axios';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const SellStock = () => {
   const { symbol } = useParams();
   const { user } = useAuth();
@@ -21,16 +23,16 @@ const SellStock = () => {
       try {
         setLoading(true);
         // Fetch stock info
-        const stockResponse = await axios.get(`http://localhost:8000/api/stocks/intraday/${symbol}`);
+        const stockResponse = await axios.get(`${API_URL}/api/stocks/intraday/${symbol}`);
         setStockInfo(stockResponse.data);
 
         // Fetch user's portfolio to get owned quantity
-        const portfolioResponse = await axios.get(`http://localhost:8000/api/stocks/portfolio/${user.email}`);
+        const portfolioResponse = await axios.get(`${API_URL}/api/stocks/portfolio/${user.email}`);
         const ownedStock = portfolioResponse.data.find(s => s.symbol === symbol);
         setOwnedQuantity(ownedStock ? ownedStock.quantity : 0);
 
         // Fetch user stats to get current credits
-        const userStatsResponse = await axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`);
+        const userStatsResponse = await axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`);
         setUserCredits(userStatsResponse.data.currentCredits);
         
         setLoading(false);
@@ -61,7 +63,7 @@ const SellStock = () => {
     setError('');
     
     try {
-      const response = await axios.post('http://localhost:8000/api/stocks/sell', { 
+      const response = await axios.post(`${API_URL}/api/stocks/sell`, { 
         email: user.email, 
         symbol, 
         quantity: parseInt(quantity) 
@@ -102,7 +104,7 @@ const SellStock = () => {
 
   return (
     <div className="sell-stock-container">
-      <button onClick={handleBack} className="back-button">← Back</button>
+      <button onClick={handleBack} className="back-button">Back</button>
       
       <div className="stock-info-header">
         <h2>{stockInfo.name} ({stockInfo.symbol})</h2>
@@ -116,7 +118,7 @@ const SellStock = () => {
           <div className="current-price">
             ${stockInfo.currentPrice.toFixed(2)}
             <span className={stockInfo.change >= 0 ? 'positive' : 'negative'}>
-              {stockInfo.change >= 0 ? '▲' : '▼'} {Math.abs(stockInfo.changePercent).toFixed(2)}%
+              {stockInfo.change >= 0 ? '' : ''} {Math.abs(stockInfo.changePercent).toFixed(2)}%
             </span>
           </div>
         </div>

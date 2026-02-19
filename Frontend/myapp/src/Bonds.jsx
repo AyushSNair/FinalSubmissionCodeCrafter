@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Bonds.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Bonds = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -19,13 +21,13 @@ const Bonds = () => {
       setLoading(true);
       const response = await axios.get(
         type === 'all' 
-          ? 'http://localhost:8000/api/bonds'
-          : `http://localhost:8000/api/bonds/type/${type}`
+          ? `${API_URL}/api/bonds`
+          : `${API_URL}/api/bonds/type/${type}`
       );
       setBonds(response.data);
 
       // Fetch user stats to get current credits
-      const userStatsResponse = await axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`);
+      const userStatsResponse = await axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`);
       setUserCredits(userStatsResponse.data.currentCredits);
       
       setLoading(false);

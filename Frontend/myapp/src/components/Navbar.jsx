@@ -23,6 +23,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const style = {
     position: 'absolute',
     top: '50%',
@@ -70,7 +72,7 @@ const Navbar = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post('http://localhost:8000/api/ai-insights/market-analysis', {
+      const response = await axios.post(`${API_URL}/api/ai-insights/market-analysis`, {
         query: aiQuery || 'Provide a market analysis'
       });
       setAiResponse(response.data.analysis);

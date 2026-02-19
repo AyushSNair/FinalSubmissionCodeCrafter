@@ -17,6 +17,8 @@ import {
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './StockDetails.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const StockDetails = () => {
   const { symbol } = useParams();
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ const StockDetails = () => {
     state: 'disconnected',
     lastError: null,
     attempts: 0,
-    url: 'http://localhost:8000'
+    url: API_URL
   });
 
   // Generate sample chart data if real data is not available
@@ -365,7 +367,7 @@ const StockDetails = () => {
     <div className="stock-dashboard">
       <div className="dashboard-header">
         <button className="btn btn-outline-light" onClick={handleBack}>
-          ← Back
+          ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back
         </button>
         <div className="header-actions">
           <button 

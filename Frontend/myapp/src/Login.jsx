@@ -9,6 +9,8 @@ import { useAuth } from "./AuthContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Login.css";
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
@@ -27,7 +29,7 @@ const AuthPage = () => {
     const endpoint = isSignUp ? "/api/users/register" : "/api/users/login";
 
     try {
-      const response = await axios.post(`http://localhost:8000${endpoint}`, formData);
+      const response = await axios.post(`${API_URL}${endpoint}`, formData);
       setMessage({ text: response.data.message || "Success!", type: "success" });
 
       // Reset inputs & switch to sign-in after successful sign-up

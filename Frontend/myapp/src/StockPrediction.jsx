@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import './StockPrediction.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const StockPrediction = () => {
     const { symbol } = useParams();
     const navigate = useNavigate();
@@ -13,7 +15,7 @@ const StockPrediction = () => {
     useEffect(() => {
         const fetchPrediction = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/stocks/prediction/${symbol}`);
+                const response = await axios.get(`${API_URL}/api/stocks/prediction/${symbol}`);
                 setPrediction(response.data);
                 setLoading(false);
             } catch (err) {

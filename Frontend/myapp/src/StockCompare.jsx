@@ -16,6 +16,8 @@ import {
 import './StockDetails.css';
 import './StockCompare.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 // Array of colors for multiple stock lines
 const CHART_COLORS = [
   '#FF5722', // Orange
@@ -116,7 +118,7 @@ const StockCompare = () => {
     const fetchBaseStockData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/stocks/intraday/${symbol}`);
+        const response = await axios.get(`${API_URL}/api/stocks/intraday/${symbol}`);
         
         // Log the response to see what data we're getting
         console.log('Base stock data:', response.data);
@@ -171,7 +173,7 @@ const StockCompare = () => {
   useEffect(() => {
     const fetchAvailableStocks = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/stocks');
+        const response = await axios.get(`${API_URL}/api/stocks`);
         // Filter out the current stock and any already selected comparison stocks
         const filteredStocks = response.data.filter(stock => 
           stock.symbol !== symbol && 
@@ -267,7 +269,7 @@ const StockCompare = () => {
     const refreshStockData = async () => {
       try {
         // Refresh base stock price and stats only
-        const baseResponse = await axios.get(`http://localhost:8000/api/stocks/intraday/${symbol}`);
+        const baseResponse = await axios.get(`${API_URL}/api/stocks/intraday/${symbol}`);
         
         if (baseResponse.data.previousClose && baseResponse.data.currentPrice) {
           const calculatedChange = baseResponse.data.currentPrice - baseResponse.data.previousClose;
@@ -289,7 +291,7 @@ const StockCompare = () => {
         if (compareStocks.length > 0) {
           const updatedCompareStocks = await Promise.all(
             compareStocks.map(async (stock) => {
-              const response = await axios.get(`http://localhost:8000/api/stocks/intraday/${stock.symbol}`);
+              const response = await axios.get(`${API_URL}/api/stocks/intraday/${stock.symbol}`);
               
               if (response.data.previousClose && response.data.currentPrice) {
                 const calculatedChange = response.data.currentPrice - response.data.previousClose;
@@ -491,7 +493,7 @@ const StockCompare = () => {
   const handleSelectStock = async (stockSymbol) => {
     try {
       setAddingStock(true);
-      const response = await axios.get(`http://localhost:8000/api/stocks/intraday/${stockSymbol}`);
+      const response = await axios.get(`${API_URL}/api/stocks/intraday/${stockSymbol}`);
       
       // Log the response to see what data we're getting
       console.log('Compare stock data:', response.data);
@@ -605,7 +607,7 @@ const StockCompare = () => {
         setGeneratingRecommendation(true);
         
         // Refresh base stock data
-        const baseResponse = await axios.get(`http://localhost:8000/api/stocks/intraday/${symbol}`);
+        const baseResponse = await axios.get(`${API_URL}/api/stocks/intraday/${symbol}`);
         console.log('Refreshed base stock data:', baseResponse.data);
         
         // Check if we have change data
@@ -641,7 +643,7 @@ const StockCompare = () => {
         // Refresh comparison stocks data
         const updatedCompareStocks = [];
         for (const stock of compareStocks) {
-          const response = await axios.get(`http://localhost:8000/api/stocks/intraday/${stock.symbol}`);
+          const response = await axios.get(`${API_URL}/api/stocks/intraday/${stock.symbol}`);
           console.log(`Refreshed ${stock.symbol} data:`, response.data);
           
           // Check if we have change data
@@ -696,7 +698,7 @@ const StockCompare = () => {
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <span key={i} className={`star ${i <= rating ? 'filled' : 'empty'}`}>
-          ★
+          ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦
         </span>
       );
     }
@@ -707,7 +709,7 @@ const StockCompare = () => {
     <div className="stock-dashboard">
       <div className="dashboard-header">
         <button className="btn btn-outline-light" onClick={handleBack}>
-          ← Back to {symbol}
+          ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to {symbol}
         </button>
         <h2 className="compare-title">Stock Comparison</h2>
         <div className="header-actions">
@@ -832,7 +834,7 @@ const StockCompare = () => {
                       setLoading(true);
                       
                       // Refresh base stock data
-                      const baseResponse = await axios.get(`http://localhost:8000/api/stocks/intraday/${symbol}`);
+                      const baseResponse = await axios.get(`${API_URL}/api/stocks/intraday/${symbol}`);
                       
                       // Check if we have change data
                       if (baseResponse.data.change === 0 && baseResponse.data.changePercent === 0) {
@@ -866,7 +868,7 @@ const StockCompare = () => {
                       if (compareStocks.length > 0) {
                         const updatedCompareStocks = [];
                         for (const stock of compareStocks) {
-                          const response = await axios.get(`http://localhost:8000/api/stocks/intraday/${stock.symbol}`);
+                          const response = await axios.get(`${API_URL}/api/stocks/intraday/${stock.symbol}`);
                           
                           // Check if we have change data
                           if (response.data.change === 0 && response.data.changePercent === 0) {

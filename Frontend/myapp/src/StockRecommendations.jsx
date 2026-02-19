@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuth } from './AuthContext';
 import './StockRecommendations.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const StockRecommendations = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -17,7 +19,7 @@ const StockRecommendations = () => {
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/api/recommendations/all');
+        const response = await axios.get(`${API_URL}/api/recommendations/all`);
         setRecommendations(response.data.recommendations);
         
         // Extract sectors from the response
@@ -28,7 +30,7 @@ const StockRecommendations = () => {
 
         // Fetch undervalued stocks data immediately
         try {
-          const undervaluedResponse = await axios.get('http://localhost:8000/api/recommendations/undervalued');
+          const undervaluedResponse = await axios.get(`${API_URL}/api/recommendations/undervalued`);
           setRecommendations(prev => ({
             ...prev,
             undervalued: {
@@ -43,7 +45,7 @@ const StockRecommendations = () => {
         // Also fetch portfolio recommendations if user is logged in
         if (user && user.email) {
           try {
-            const portfolioResponse = await axios.get(`http://localhost:8000/api/recommendations/portfolio/${user.email}`);
+            const portfolioResponse = await axios.get(`${API_URL}/api/recommendations/portfolio/${user.email}`);
             
             // Update recommendations with portfolio data
             setRecommendations(prev => ({
@@ -78,7 +80,7 @@ const StockRecommendations = () => {
   const fetchSpecificRecommendation = async (type, param = null) => {
     try {
       setLoading(true);
-      let url = `http://localhost:8000/api/recommendations/${type}`;
+      let url = `${API_URL}/api/recommendations/${type}`;
       
       if (param) {
         url += `/${param}`;
@@ -586,7 +588,7 @@ const StockRecommendations = () => {
     <div className="recommendations-container">
       <header className="recommendations-header">
         <button className="back-button" onClick={handleBack}>
-          ← Back to Dashboard
+          ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to Dashboard
         </button>
         <h1>Stock Recommendations</h1>
       </header>

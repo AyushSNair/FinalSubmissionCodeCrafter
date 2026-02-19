@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import axios from 'axios';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Recommendations = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -23,10 +25,10 @@ const Recommendations = () => {
         
         // Fetch user stats and portfolio data
         const [userStatsRes, stocksRes, bondsRes, insuranceRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`),
-          axios.get(`http://localhost:8000/api/stocks`),
-          axios.get(`http://localhost:8000/api/bonds`),
-          axios.get(`http://localhost:8000/api/insurance`)
+          axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`),
+          axios.get(`${API_URL}/api/stocks`),
+          axios.get(`${API_URL}/api/bonds`),
+          axios.get(`${API_URL}/api/insurance`)
         ]);
 
         setUserStats(userStatsRes.data);
@@ -144,7 +146,7 @@ const Recommendations = () => {
 
   return (
     <div className="recommendations-container">
-      <button onClick={handleBack} className="back-button">← Back to Dashboard</button>
+      <button onClick={handleBack} className="back-button"> Back to Dashboard</button>
       
       <h1>Investment Recommendations</h1>
       
@@ -171,7 +173,7 @@ const Recommendations = () => {
                   <div className="detail-item">
                     <span>Change:</span>
                     <span className={stock.changePercent >= 0 ? 'positive' : 'negative'}>
-                      {stock.changePercent >= 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
+                      {stock.changePercent >= 0 ? '' : ''} {Math.abs(stock.changePercent).toFixed(2)}%
                     </span>
                   </div>
                   <div className="detail-item">

@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import axios from 'axios';
 import './App.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const BuyInsurance = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -19,11 +21,11 @@ const BuyInsurance = () => {
       try {
         setLoading(true);
         // Fetch insurance info
-        const insuranceResponse = await axios.get(`http://localhost:8000/api/insurance/${id}`);
+        const insuranceResponse = await axios.get(`${API_URL}/api/insurance/${id}`);
         setInsuranceInfo(insuranceResponse.data);
 
         // Fetch user stats to get current credits
-        const userStatsResponse = await axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`);
+        const userStatsResponse = await axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`);
         setUserCredits(userStatsResponse.data.currentCredits);
         
         setLoading(false);
@@ -50,7 +52,7 @@ const BuyInsurance = () => {
     setError('');
     
     try {
-      const response = await axios.post('http://localhost:8000/api/insurance/buy', { 
+      const response = await axios.post(`${API_URL}/api/insurance/buy`, { 
         email: user.email, 
         insuranceId: id
       });
@@ -83,7 +85,7 @@ const BuyInsurance = () => {
 
   return (
     <div className="buy-stock-container">
-      <button onClick={handleBack} className="back-button">← Back</button>
+      <button onClick={handleBack} className="back-button">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back</button>
       
       <div className="stock-info-header">
         <h2>{insuranceInfo.name}</h2>

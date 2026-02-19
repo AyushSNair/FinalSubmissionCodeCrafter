@@ -24,6 +24,8 @@ import {
     AutoGraph,
 } from '@mui/icons-material';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Home = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +39,7 @@ const Home = () => {
     const fetchUserStats = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`);
+        const response = await axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`);
         setUserStats(response.data);
         setLoading(false);
       } catch (err) {
@@ -92,13 +94,13 @@ const Home = () => {
         handler: async function (response) {
           try {
             // Update user credits after successful payment
-            await axios.post('http://localhost:8000/api/users/update-credits', {
+            await axios.post(`${API_URL}/api/users/update-credits`, {
               email: user.email,
               credits
             });
 
             // Refresh user stats
-            const response = await axios.get(`http://localhost:8000/api/stocks/user-stats/${user.email}`);
+            const response = await axios.get(`${API_URL}/api/stocks/user-stats/${user.email}`);
             setUserStats(response.data);
             setIsEditingCredits(false);
             setNewCredits('');
@@ -239,7 +241,7 @@ const Home = () => {
             </div>
             
             {/* <div className="stat-card">
-              <div className="stat-icon">📉</div>
+              <div className="stat-icon">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â°</div>
               <div className="stat-value">{userStats.totalSold}</div>
               <div className="stat-label">Stocks Sold</div>
             </div> */}

@@ -21,6 +21,8 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const GeminiInsights = () => {
     const [query, setQuery] = useState('');
     const [response, setResponse] = useState('');
@@ -40,7 +42,7 @@ const GeminiInsights = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.post('http://localhost:8000/api/ai-insights/market-analysis', {
+            const response = await axios.post(`${API_URL}/api/ai-insights/market-analysis`, {
                 query: customQuery || query || 'Provide a market analysis'
             });
             setResponse(response.data.analysis);

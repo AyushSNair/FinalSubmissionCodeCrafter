@@ -8,6 +8,8 @@ import {
   Tooltip, Legend
 } from 'recharts';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Portfolio = () => {
   const { user } = useAuth();
   const [portfolio, setPortfolio] = useState([]);
@@ -63,9 +65,9 @@ const Portfolio = () => {
   const fetchPortfolio = async () => {
     try {
       const [stocksRes, bondsRes, insuranceRes] = await Promise.all([
-        axios.get(`http://localhost:8000/api/stocks/portfolio/${user.email}`),
-        axios.get(`http://localhost:8000/api/bonds/portfolio/${user.email}`),
-        axios.get(`http://localhost:8000/api/insurance/portfolio/${user.email}`)
+        axios.get(`${API_URL}/api/stocks/portfolio/${user.email}`),
+        axios.get(`${API_URL}/api/bonds/portfolio/${user.email}`),
+        axios.get(`${API_URL}/api/insurance/portfolio/${user.email}`)
       ]);
 
       setPortfolio(stocksRes.data);
@@ -114,7 +116,7 @@ const Portfolio = () => {
   return (
     <div className="portfolio-container">
       <button className="back-button" onClick={handleBack}>
-        ← Back to Home
+        ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to Home
       </button>
       
       <h2 className="portfolio-header">Your Portfolio</h2>
