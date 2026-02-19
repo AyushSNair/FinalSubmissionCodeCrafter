@@ -368,11 +368,23 @@ router.post('/buy', async (req, res) => {
             return res.status(400).json({ message: "Not enough stock available" });
         }
 
-        // Get real-time price
-        const realTimeQuote = await getStockQuote(symbol);
+        // Get real-time price, fall back to stored price if Yahoo Finance is unavailable
+        let currentPrice;
+        try {
+            const realTimeQuote = await getStockQuote(symbol);
+            currentPrice = realTimeQuote.price;
+            // Keep stock data fresh while we have it
+            stock.change = realTimeQuote.change;
+            stock.changePercent = realTimeQuote.changePercent;
+            stock.volume = realTimeQuote.volume;
+            stock.marketCap = realTimeQuote.marketCap;
+        } catch (quoteErr) {
+            console.warn(`Yahoo Finance unavailable for ${symbol}, using stored price:`, quoteErr.message);
+            currentPrice = stock.price;
+        }
         
         // Calculate total cost
-        const totalCost = realTimeQuote.price * quantity;
+        const totalCost = currentPrice * quantity;
 
         // Check if user has enough credits
         if (user.credits < totalCost) {
@@ -388,11 +400,7 @@ router.post('/buy', async (req, res) => {
         await user.save();
         
         stock.quantity -= quantity;
-        stock.price = realTimeQuote.price;
-        stock.change = realTimeQuote.change;
-        stock.changePercent = realTimeQuote.changePercent;
-        stock.volume = realTimeQuote.volume;
-        stock.marketCap = realTimeQuote.marketCap;
+        stock.price = currentPrice;
         stock.lastUpdated = new Date();
         await stock.save();
         
@@ -400,7 +408,7 @@ router.post('/buy', async (req, res) => {
             userEmail: email,
             symbol: stock.symbol,
             name: stock.name,
-            price: realTimeQuote.price,
+            price: currentPrice,
             quantity,
             type: "BUY"
         });
@@ -423,7 +431,7 @@ router.post('/buy', async (req, res) => {
             message: "Stock purchased successfully", 
             transaction, 
             portfolio,
-            currentPrice: realTimeQuote.price,
+            currentPrice,
             remainingCredits: user.credits
         });
     } catch (error) {
@@ -453,9 +461,20 @@ router.post('/sell', async (req, res) => {
             return res.status(400).json({ message: "Not enough stocks to sell" });
         }
 
-        // Get real-time price for selling
-        const realTimeQuote = await getStockQuote(symbol);
-        const totalEarnings = realTimeQuote.price * quantity;
+        // Get real-time price, fall back to stored price if Yahoo Finance is unavailable
+        let sellPrice;
+        try {
+            const realTimeQuote = await getStockQuote(symbol);
+            sellPrice = realTimeQuote.price;
+            stock.change = realTimeQuote.change;
+            stock.changePercent = realTimeQuote.changePercent;
+            stock.volume = realTimeQuote.volume;
+            stock.marketCap = realTimeQuote.marketCap;
+        } catch (quoteErr) {
+            console.warn(`Yahoo Finance unavailable for ${symbol}, using stored price:`, quoteErr.message);
+            sellPrice = stock.price;
+        }
+        const totalEarnings = sellPrice * quantity;
 
         // Update user credits with earnings
         user.credits += totalEarnings;
@@ -468,11 +487,7 @@ router.post('/sell', async (req, res) => {
         await portfolio.save();
         
         stock.quantity += quantity;
-        stock.price = realTimeQuote.price;
-        stock.change = realTimeQuote.change;
-        stock.changePercent = realTimeQuote.changePercent;
-        stock.volume = realTimeQuote.volume;
-        stock.marketCap = realTimeQuote.marketCap;
+        stock.price = sellPrice;
         stock.lastUpdated = new Date();
         await stock.save();
         
@@ -480,7 +495,7 @@ router.post('/sell', async (req, res) => {
             userEmail: email,
             symbol: stock.symbol,
             name: stock.name,
-            price: realTimeQuote.price,
+            price: sellPrice,
             quantity,
             type: "SELL"
         });
@@ -490,7 +505,7 @@ router.post('/sell', async (req, res) => {
             message: "Stock sold successfully", 
             transaction, 
             portfolio,
-            currentPrice: realTimeQuote.price,
+            currentPrice: sellPrice,
             earnedCredits: totalEarnings,
             newCreditBalance: user.credits
         });
