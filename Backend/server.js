@@ -60,6 +60,10 @@ const logWebSocketEvent = (event, socket, details = {}) => {
     });
 };
 
+app.get("/", (req, res) => {
+    res.send("Backend is running ");
+});
+
 // Add health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
