@@ -4,32 +4,35 @@ require('dotenv').config();
 class GeminiService {
     constructor() {
         // Initialize Gemini API with your API key
-        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
-            apiVersion: 'v1'
-        });
+        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
         
         // Get the model
-        this.model = this.genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            safetySettings: [
-                {
-                    category: "HARM_CATEGORY_HARASSMENT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE",
-                },
-                {
-                    category: "HARM_CATEGORY_HATE_SPEECH",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE",
-                },
-                {
-                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE",
-                },
-                {
-                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    threshold: "BLOCK_MEDIUM_AND_ABOVE",
-                },
-            ],
-        });
+        this.model = this.genAI.getGenerativeModel(
+            {
+                model: "gemini-1.5-flash",
+                safetySettings: [
+                    {
+                        category: "HARM_CATEGORY_HARASSMENT",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE",
+                    },
+                    {
+                        category: "HARM_CATEGORY_HATE_SPEECH",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE",
+                    },
+                    {
+                        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE",
+                    },
+                    {
+                        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE",
+                    },
+                ],
+            },
+            { apiVersion: 'v1' }  // gemini-1.5-flash lives on v1, not v1beta
+        );
+
     }
 
     async getStockInsights(symbol, stockData, userQuery) {
