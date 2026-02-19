@@ -1,18 +1,5 @@
 const yahooFinance = require('yahoo-finance2').default;
 
-// Add browser-like headers to avoid being blocked by Yahoo Finance on cloud servers
-yahooFinance.setGlobalConfig({
-    fetchOptions: {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': 'https://finance.yahoo.com/'
-        }
-    }
-});
-
-
 const getStockQuote = async (symbol) => {
     try {
         console.log(`Fetching quote for ${symbol}...`);
