@@ -5,7 +5,8 @@ const meanReversionService = require('../services/meanReversionService');
 const Portfolio = require('../models/Portfolio');
 const User = require('../models/userModel');
 const Watchlist = require('../models/Watchlist');
-const yahooFinance = require('yahoo-finance2').default;
+const { getHistoricalCandles } = require('../utils/yahooFinance');
+
 
 // Start automated trading
 router.post('/start/:email', async (req, res) => {
@@ -179,49 +180,21 @@ router.get('/test/:symbol', async (req, res) => {
     }
 });
 
-// Test Yahoo Finance API
+// Test Finnhub API with last 20 days of daily candles
 router.get('/test-yahoo/:symbol', async (req, res) => {
     try {
         const { symbol } = req.params;
-        console.log('Testing Yahoo Finance API for symbol:', symbol);
-        
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 20);
-
-        // Format dates for Yahoo Finance API (convert to Unix timestamp)
-        const formattedStartDate = Math.floor(startDate.getTime() / 1000);
-        const formattedEndDate = Math.floor(endDate.getTime() / 1000);
-
-        const chartData = await yahooFinance.chart(symbol, {
-            period1: formattedStartDate,
-            period2: formattedEndDate,
-            interval: '1d'
-        });
-
-        if (!chartData || !chartData.result || !chartData.result[0] || !chartData.result[0].indicators || !chartData.result[0].indicators.quote) {
-            console.log(`No data available for ${symbol}`);
-            return res.status(404).json({ 
-                message: "No data available for this symbol",
-                symbol 
-            });
-        }
-
-        const quotes = chartData.result[0].indicators.quote;
-        const timestamps = chartData.result[0].timestamp;
-
-        console.log('Received data points:', quotes.close.length);
+        const toDate = new Date();
+        const fromDate = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+        const candles = await getHistoricalCandles(symbol, fromDate, toDate, 'D');
         res.status(200).json({
-            message: "Yahoo Finance API test successful",
-            dataPoints: quotes.close.length,
-            lastPrice: quotes.close[quotes.close.length - 1]
+            message: "Finnhub API test successful",
+            dataPoints: candles.length,
+            lastPrice: candles[candles.length - 1]?.close
         });
     } catch (error) {
-        console.error('Error testing Yahoo Finance API:', error);
-        res.status(500).json({ 
-            message: "Error testing Yahoo Finance API",
-            error: error.message 
-        });
+        console.error('Error testing Finnhub API:', error);
+        res.status(500).json({ message: "Error testing Finnhub API", error: error.message });
     }
 });
 

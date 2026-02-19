@@ -1,6 +1,4 @@
-const yahooFinance = require('yahoo-finance2').default;
-// Suppress deprecation warnings
-yahooFinance.suppressNotices(['ripHistorical']);
+const { getHistoricalCandles } = require('../utils/yahooFinance');
 
 class MeanReversionService {
     constructor() {
@@ -30,22 +28,16 @@ class MeanReversionService {
             // Calculate date range based on current date
             const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(startDate.getDate() - this.lookbackPeriod);
+            startDate.setDate(startDate.getDate() - this.lookbackPeriod - 5); // extra buffer for weekends
 
-            console.log(`Fetching chart data for ${symbol} from ${startDate.toISOString()} to ${endDate.toISOString()}`);
-            
-            const chartData = await yahooFinance.chart(symbol, {
-                period1: Math.floor(startDate.getTime() / 1000),
-                period2: Math.floor(endDate.getTime() / 1000),
-                interval: '1d'
-            });
+            const candles = await getHistoricalCandles(symbol, startDate, endDate);
 
-            if (!chartData || !chartData.quotes || chartData.quotes.length === 0) {
+            if (!candles || candles.length === 0) {
                 console.log(`No data available for ${symbol}`);
                 return null;
             }
 
-            const prices = chartData.quotes.map(quote => quote.close);
+            const prices = candles.map(c => c.close);
             const mean = this.calculateMean(prices);
             const stdDev = this.calculateStandardDeviation(prices, mean);
             const currentPrice = prices[prices.length - 1];

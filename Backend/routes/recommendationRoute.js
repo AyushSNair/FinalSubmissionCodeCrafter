@@ -3,8 +3,8 @@ const router = express.Router();
 const Stock = require('../models/Stock');
 const Portfolio = require('../models/Portfolio');
 const User = require('../models/userModel');
-const { getStockQuote, updateStockPrices } = require('../utils/yahooFinance');
-const yahooFinance = require('yahoo-finance2').default;
+const { getStockQuote, updateStockPrices, getHistoricalCandles, getCompanyProfile, getBasicMetrics } = require('../utils/yahooFinance');
+
 
 /**
  * @route   GET /api/recommendations/trending
@@ -66,50 +66,24 @@ router.get('/undervalued', async (req, res) => {
         const stocksWithDetails = await Promise.all(
             updatedStocks.map(async (stock) => {
                 try {
-                    // Get additional financial data
-                    const quote = await yahooFinance.quote(stock.symbol);
+                    // Get financial metrics from Finnhub
+                    const metrics = await getBasicMetrics(stock.symbol);
                     
-                    // Calculate a simple undervalued score based on P/E ratio and price to book
-                    // Lower P/E ratio and price to book ratio may indicate undervalued stocks
-                    const peRatio = quote.trailingPE || 0;
-                    const priceToBook = quote.priceToBook || 0;
-                    const fiftyTwoWeekHigh = quote.fiftyTwoWeekHigh || 0;
+                    const peRatio = metrics['peBasicExclExtraTTM'] || metrics['peTTM'] || 0;
+                    const priceToBook = metrics['pbQuarterly'] || metrics['pbAnnual'] || 0;
+                    const fiftyTwoWeekHigh = metrics['52WeekHigh'] || 0;
                     const currentPrice = stock.price;
                     
-                    // Calculate percentage below 52-week high
                     const percentBelow52WeekHigh = fiftyTwoWeekHigh > 0 
                         ? ((fiftyTwoWeekHigh - currentPrice) / fiftyTwoWeekHigh) * 100 
                         : 0;
                     
-                    // Simple undervalued score (lower is better)
-                    // We consider P/E ratio, price to book, and how far below 52-week high
                     let undervaluedScore = 0;
+                    if (peRatio > 0) undervaluedScore += peRatio < 15 ? 3 : (peRatio < 25 ? 1 : 0);
+                    if (priceToBook > 0) undervaluedScore += priceToBook < 1 ? 3 : (priceToBook < 3 ? 1 : 0);
+                    undervaluedScore += percentBelow52WeekHigh > 30 ? 3 : (percentBelow52WeekHigh > 15 ? 2 : (percentBelow52WeekHigh > 5 ? 1 : 0));
                     
-                    // Add score for P/E ratio (if available and positive)
-                    if (peRatio > 0) {
-                        // Lower P/E is better, industry average is around 15-25
-                        undervaluedScore += peRatio < 15 ? 3 : (peRatio < 25 ? 1 : 0);
-                    }
-                    
-                    // Add score for price to book (if available and positive)
-                    if (priceToBook > 0) {
-                        // Lower price to book is better, below 1 is often considered undervalued
-                        undervaluedScore += priceToBook < 1 ? 3 : (priceToBook < 3 ? 1 : 0);
-                    }
-                    
-                    // Add score for percentage below 52-week high
-                    // Higher percentage below 52-week high might indicate undervalued
-                    undervaluedScore += percentBelow52WeekHigh > 30 ? 3 : 
-                                       (percentBelow52WeekHigh > 15 ? 2 : 
-                                       (percentBelow52WeekHigh > 5 ? 1 : 0));
-                    
-                    return {
-                        ...stock,
-                        peRatio,
-                        priceToBook,
-                        percentBelow52WeekHigh,
-                        undervaluedScore
-                    };
+                    return { ...stock, peRatio, priceToBook, percentBelow52WeekHigh, undervaluedScore };
                 } catch (error) {
                     console.error(`Error fetching details for ${stock.symbol}:`, error);
                     return {
@@ -190,27 +164,16 @@ router.get('/high-volume', async (req, res) => {
         const stocksWithVolumeData = await Promise.all(
             updatedStocks.map(async (stock) => {
                 try {
-                    // Get historical data for the past week
-                    const historicalData = await yahooFinance.historical(stock.symbol, {
-                        period1: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-                        period2: new Date(),
-                        interval: '1d'
-                    });
+                    // Get last 7 days of daily candles for average volume
+                    const toDate = new Date();
+                    const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    const candles = await getHistoricalCandles(stock.symbol, fromDate, toDate, 'D');
                     
-                    // Calculate average volume
-                    const volumes = historicalData.map(data => data.volume).filter(vol => vol > 0);
-                    const avgVolume = volumes.length > 0 
-                        ? volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length 
-                        : 0;
-                    
-                    // Calculate volume ratio (current volume / average volume)
+                    const volumes = candles.map(c => c.volume).filter(v => v > 0);
+                    const avgVolume = volumes.length > 0 ? volumes.reduce((s, v) => s + v, 0) / volumes.length : 0;
                     const volumeRatio = avgVolume > 0 ? stock.volume / avgVolume : 0;
                     
-                    return {
-                        ...stock,
-                        avgVolume,
-                        volumeRatio
-                    };
+                    return { ...stock, avgVolume, volumeRatio };
                 } catch (error) {
                     console.error(`Error fetching volume data for ${stock.symbol}:`, error);
                     return {
@@ -277,16 +240,11 @@ router.get('/sector/:sector', async (req, res) => {
         const stocksWithSector = await Promise.all(
             updatedStocks.map(async (stock) => {
                 try {
-                    // Get additional data including sector
-                    const quote = await yahooFinance.quoteSummary(stock.symbol, { modules: ['assetProfile'] });
-                    const stockSector = quote.assetProfile?.sector || 'Unknown';
-                    const industry = quote.assetProfile?.industry || 'Unknown';
-                    
-                    return {
-                        ...stock,
-                        sector: stockSector,
-                        industry
-                    };
+                    // Get sector/industry from Finnhub company profile
+                    const profile = await getCompanyProfile(stock.symbol);
+                    const stockSector = profile.finnhubIndustry || 'Unknown';
+                    const industry = profile.finnhubIndustry || 'Unknown';
+                    return { ...stock, sector: stockSector, industry };
                 } catch (error) {
                     console.error(`Error fetching sector data for ${stock.symbol}:`, error);
                     return {
@@ -394,12 +352,8 @@ router.get('/portfolio/:email', async (req, res) => {
         const portfolioStocksData = await Promise.all(
             portfolioSymbols.map(async (symbol) => {
                 try {
-                    const quote = await yahooFinance.quoteSummary(symbol, { modules: ['assetProfile'] });
-                    return {
-                        symbol,
-                        sector: quote.assetProfile?.sector || 'Unknown',
-                        industry: quote.assetProfile?.industry || 'Unknown'
-                    };
+                    const profile = await getCompanyProfile(symbol);
+                    return { symbol, sector: profile.finnhubIndustry || 'Unknown', industry: profile.finnhubIndustry || 'Unknown' };
                 } catch (error) {
                     console.error(`Error fetching data for ${symbol}:`, error);
                     return { symbol, sector: 'Unknown', industry: 'Unknown' };
@@ -417,12 +371,8 @@ router.get('/portfolio/:email', async (req, res) => {
                 .filter(stock => !portfolioSymbols.includes(stock.symbol)) // Exclude stocks already in portfolio
                 .map(async (stock) => {
                     try {
-                        const quote = await yahooFinance.quoteSummary(stock.symbol, { modules: ['assetProfile'] });
-                        return {
-                            ...stock,
-                            sector: quote.assetProfile?.sector || 'Unknown',
-                            industry: quote.assetProfile?.industry || 'Unknown'
-                        };
+                    const profile = await getCompanyProfile(stock.symbol);
+                    return { ...stock, sector: profile.finnhubIndustry || 'Unknown', industry: profile.finnhubIndustry || 'Unknown' };
                     } catch (error) {
                         console.error(`Error fetching sector data for ${stock.symbol}:`, error);
                         return {

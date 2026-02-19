@@ -4,8 +4,8 @@ const Stock = require('../models/Stock');
 const Portfolio = require('../models/Portfolio');
 const Transaction = require('../models/Transaction');
 const User = require('../models/userModel');
-const { getStockQuote, updateStockPrices } = require('../utils/yahooFinance');
-const yahooFinance = require('yahoo-finance2').default;
+const { getStockQuote, updateStockPrices, getHistoricalCandles } = require('../utils/yahooFinance');
+
 
 /**
  * @route   GET /api/stocks
@@ -532,57 +532,45 @@ router.get('/intraday/:symbol', async (req, res) => {
         }
 
         try {
-            // Get intraday data from Yahoo Finance
-            console.log(`Fetching quote for ${symbol}`);
-            const quote = await yahooFinance.quote(symbol);
+            // Get real-time quote from Finnhub
+            const quote = await getStockQuote(symbol);
             
-            console.log(`Fetching chart data for ${symbol}`);
-            const intradayData = await yahooFinance.chart(symbol, {
-                interval: '15m',
-                range: '1d'
-            });
-
-            // Generate sample chart data if no data is available
+            // Get hourly candle data for last 2 days
+            const toDate = new Date();
+            const fromDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
             let chartData = [];
-            if (intradayData.quotes && intradayData.quotes.length > 0) {
-                console.log(`Received ${intradayData.quotes.length} data points for ${symbol}`);
-                chartData = intradayData.quotes.map(quote => ({
-                    time: new Date(quote.timestamp * 1000).toLocaleTimeString(),
-                    price: quote.close || quote.open,
-                    volume: quote.volume
+
+            try {
+                const candles = await getHistoricalCandles(symbol, fromDate, toDate, '60');
+                chartData = candles.map(c => ({
+                    time: c.date.toLocaleTimeString(),
+                    price: c.close,
+                    volume: c.volume
                 }));
-            } else {
-                console.log(`No chart data available for ${symbol}, generating sample data`);
-                // Generate sample data
-                const basePrice = quote.regularMarketPrice || stock.price || 100;
+            } catch (candleErr) {
+                console.warn(`No intraday candles for ${symbol}, generating sample data`);
+                const basePrice = quote.price || stock.price || 100;
                 const now = new Date();
-                
                 for (let i = 0; i < 24; i++) {
                     const time = new Date(now.getTime() - (23 - i) * 3600000);
-                    chartData.push({
-                        time: time.toLocaleTimeString(),
-                        price: basePrice + (Math.random() * 10 - 5),
-                        volume: Math.floor(Math.random() * 1000000)
-                    });
+                    chartData.push({ time: time.toLocaleTimeString(), price: basePrice + (Math.random() * 10 - 5), volume: Math.floor(Math.random() * 1000000) });
                 }
             }
 
-            // Format the response
             const stockDetails = {
                 symbol: stock.symbol,
                 name: stock.name,
-                currentPrice: quote.regularMarketPrice || stock.price,
-                change: quote.regularMarketChange || 0,
-                changePercent: quote.regularMarketChangePercent || 0,
-                open: quote.regularMarketOpen || stock.price,
-                high: quote.regularMarketDayHigh || stock.price,
-                low: quote.regularMarketDayLow || stock.price,
-                volume: quote.regularMarketVolume || 0,
+                currentPrice: quote.price,
+                change: quote.change || 0,
+                changePercent: quote.changePercent || 0,
+                open: quote.open || stock.price,
+                high: quote.high || stock.price,
+                low: quote.low || stock.price,
+                volume: quote.volume || 0,
                 marketCap: quote.marketCap || 0,
-                chartData: chartData
+                chartData
             };
 
-            console.log(`Successfully prepared stock details for ${symbol}`);
             res.status(200).json(stockDetails);
         } catch (yahooError) {
             console.error('Yahoo Finance API Error:', yahooError);
@@ -634,26 +622,21 @@ router.get('/prediction/:symbol', async (req, res) => {
     try {
         const { symbol } = req.params;
         
-        // Fetch current stock data
-        const quote = await yahooFinance.quote(symbol);
-        if (!quote) {
-            return res.status(404).json({ message: "Stock not found" });
-        }
+        // Fetch current stock data from Finnhub
+        const quote = await getStockQuote(symbol);
+        const currentPrice = quote.price;
 
-        // Fetch historical data for technical analysis
-        const historicalData = await yahooFinance.historical(symbol, {
-            period1: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
-            period2: new Date(),
-            interval: '1d'
-        });
+        // Fetch 1 year of daily historical data from Finnhub
+        const toDate = new Date();
+        const fromDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+        const candles = await getHistoricalCandles(symbol, fromDate, toDate, 'D');
 
-        if (!historicalData || historicalData.length === 0) {
+        if (!candles || candles.length === 0) {
             return res.status(404).json({ message: "No historical data available" });
         }
 
         // Calculate technical indicators
-        const prices = historicalData.map(d => d.close);
-        
+        const prices = candles.map(d => d.close);
         // Calculate 20-day and 50-day moving averages
         const ma20 = calculateMA(prices, 20);
         const ma50 = calculateMA(prices, 50);
@@ -665,7 +648,6 @@ router.get('/prediction/:symbol', async (req, res) => {
         const { trend, confidence } = analyzeTrend(prices, ma20, ma50, rsi);
 
         // Generate prediction
-        const currentPrice = quote.regularMarketPrice;
         const predictedPrice = predictPrice(currentPrice, trend, confidence);
 
         // Prepare response
